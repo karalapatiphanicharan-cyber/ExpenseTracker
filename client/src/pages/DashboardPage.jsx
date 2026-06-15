@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { cn } from '../utils/cn';
 import {
   TrendingUp,
   DollarSign,
@@ -46,7 +47,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
-  const [sortConfig, setSortSortConfig] = useState({ key: 'date', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentExpense, setCurrentExpense] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -373,7 +374,7 @@ const DashboardPage = () => {
                 value={`${sortConfig.key}-${sortConfig.direction}`}
                 onChange={(e) => {
                   const [key, direction] = e.target.value.split('-');
-                  setSortSortConfig({ key, direction });
+                  setSortConfig({ key, direction });
                 }}
               >
                 <option value="date-desc">Newest First</option>
