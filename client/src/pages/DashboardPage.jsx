@@ -47,6 +47,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [timeFilter, setTimeFilter] = useState('This Month');
   const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentExpense, setCurrentExpense] = useState(null);
@@ -72,6 +73,7 @@ const DashboardPage = () => {
     const total = expenses.reduce((acc, curr) => acc + curr.amount, 0);
     const count = expenses.length;
     const now = new Date();
+
     const thisMonthExpenses = expenses.filter(exp => {
       const date = new Date(exp.date);
       return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
@@ -87,15 +89,40 @@ const DashboardPage = () => {
     });
     const topCategory = Object.entries(categories).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
-    return { total, count, thisMonthTotal, budget, remainingBudget, topCategory };
+    const largestExpense = expenses.length > 0 ? [...expenses].sort((a, b) => b.amount - a.amount)[0] : null;
+
+    // Average daily spending this month
+    const daysInMonthSoFar = now.getDate();
+    const averageDaily = thisMonthTotal / Math.max(daysInMonthSoFar, 1);
+
+    return { total, count, thisMonthTotal, budget, remainingBudget, topCategory, largestExpense, averageDaily };
   }, [expenses, user]);
 
   const filteredAndSortedExpenses = useMemo(() => {
     let result = expenses.filter(exp => {
-      const matchesSearch = exp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (exp.description && exp.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      const expDate = new Date(exp.date);
+      const now = new Date();
+
+      const matchesSearch =
+        exp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (exp.description && exp.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (exp.merchant && exp.merchant.toLowerCase().includes(searchTerm.toLowerCase()));
+
       const matchesCategory = categoryFilter === 'All' || exp.category === categoryFilter;
-      return matchesSearch && matchesCategory;
+
+      let matchesTime = true;
+      if (timeFilter === 'Today') {
+        matchesTime = expDate.toDateString() === now.toDateString();
+      } else if (timeFilter === 'This Week') {
+        const startOfWeek = new Date();
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0,0,0,0);
+        matchesTime = expDate >= startOfWeek;
+      } else if (timeFilter === 'This Month') {
+        matchesTime = expDate.getMonth() === new Date().getMonth() && expDate.getFullYear() === new Date().getFullYear();
+      }
+
+      return matchesSearch && matchesCategory && matchesTime;
     });
 
     result.sort((a, b) => {
@@ -113,7 +140,7 @@ const DashboardPage = () => {
     });
 
     return result;
-  }, [expenses, searchTerm, categoryFilter, sortConfig]);
+  }, [expenses, searchTerm, categoryFilter, timeFilter, sortConfig]);
 
   const chartData = useMemo(() => {
     const categories = {};
@@ -149,11 +176,13 @@ const DashboardPage = () => {
 
   const handleExportCSV = () => {
     try {
-      const headers = ['Title', 'Amount', 'Category', 'Date', 'Description'];
+      const headers = ['Expense Name', 'Amount', 'Category', 'Payment Method', 'Merchant', 'Date', 'Notes'];
       const rows = expenses.map(exp => [
         `"${(exp.title || '').replace(/"/g, '""')}"`,
         exp.amount,
         `"${(exp.category || '').replace(/"/g, '""')}"`,
+        `"${(exp.paymentMethod || 'Cash').replace(/"/g, '""')}"`,
+        `"${(exp.merchant || '').replace(/"/g, '""')}"`,
         `"${new Date(exp.date).toLocaleDateString()}"`,
         `"${(exp.description || '').replace(/"/g, '""')}"`
       ].join(','));
@@ -196,8 +225,8 @@ const DashboardPage = () => {
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
-          <p className="text-slate-500 dark:text-slate-400">Welcome back, {user?.name}. Here's your financial overview.</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Overview</h1>
+          <p className="text-slate-500 dark:text-slate-400">Welcome back, {user?.name}. Here's what's happening.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="secondary" onClick={handleExportCSV}>
@@ -250,20 +279,21 @@ const DashboardPage = () => {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
         {[
-          { label: 'Total Expenses', value: `$${stats.total.toLocaleString()}`, icon: DollarSign, color: 'text-primary-600', bg: 'bg-primary-50 dark:bg-primary-900/20' },
-          { label: 'Transactions', value: stats.count, icon: List, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+          { label: 'Total Spent', value: `$${stats.total.toLocaleString()}`, icon: DollarSign, color: 'text-primary-600', bg: 'bg-primary-50 dark:bg-primary-900/20' },
           { label: 'This Month', value: `$${stats.thisMonthTotal.toLocaleString()}`, icon: TrendingUp, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/20' },
           { label: 'Remaining', value: `$${Math.max(0, stats.remainingBudget).toLocaleString()}`, icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+          { label: 'Avg. Daily', value: `$${stats.averageDaily.toFixed(2)}`, icon: ArrowUpRight, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+          { label: 'Largest', value: stats.largestExpense ? `$${stats.largestExpense.amount.toLocaleString()}` : 'N/A', icon: ArrowDownRight, color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20' },
           { label: 'Top Category', value: stats.topCategory, icon: PieChartIcon, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
         ].map((item, i) => (
-          <Card key={i} className="p-5 flex flex-col items-center text-center justify-center border-slate-100 dark:border-slate-800">
+          <Card key={i} className="p-5 flex flex-col items-center text-center justify-center border-slate-100 dark:border-slate-800 hover:shadow-md transition-all">
             <div className={cn("p-3 rounded-2xl mb-3", item.bg, item.color)}>
-              <item.icon size={24} />
+              <item.icon size={22} />
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">{item.label}</p>
-            <p className="text-xl font-bold text-slate-900 dark:text-white">{item.value}</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white truncate w-full px-2">{item.value}</p>
           </Card>
         ))}
       </div>
@@ -345,44 +375,66 @@ const DashboardPage = () => {
 
       {/* Expense List View */}
       <Card className="p-0 overflow-hidden border-slate-100 dark:border-slate-800">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h3 className="font-bold text-slate-800 dark:text-white text-lg">Transaction History</h3>
-            <div className="flex flex-wrap gap-3">
-              <div className="relative flex-1 md:flex-none">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm w-full md:w-64 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:text-white"
-                  placeholder="Search transactions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <select
-                className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 outline-none dark:text-white"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="All">All Categories</option>
-                {['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment', 'Health', 'Education', 'Rent', 'Travel', 'Other'].map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <select
-                className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 outline-none dark:text-white"
-                value={`${sortConfig.key}-${sortConfig.direction}`}
-                onChange={(e) => {
-                  const [key, direction] = e.target.value.split('-');
-                  setSortConfig({ key, direction });
-                }}
-              >
-                <option value="date-desc">Newest First</option>
-                <option value="date-asc">Oldest First</option>
-                <option value="amount-desc">Highest Amount</option>
-                <option value="amount-asc">Lowest Amount</option>
-              </select>
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+              {['All', 'Today', 'This Week', 'This Month'].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setTimeFilter(filter)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                    timeFilter === filter
+                      ? "bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-400 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  )}
+                >
+                  {filter}
+                </button>
+              ))}
             </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 md:flex-none">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm w-full md:w-64 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:text-white"
+                placeholder="Search name, merchant, notes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <select
+              className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 outline-none dark:text-white cursor-pointer"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="All">All Categories</option>
+              {[
+                'Food & Dining', 'Groceries', 'Transportation', 'Rent', 'Utilities',
+                'Shopping', 'Entertainment', 'Healthcare', 'Education', 'Travel',
+                'Salary', 'Investment', 'EMI', 'Insurance', 'Subscriptions',
+                'Personal Care', 'Gifts', 'Other'
+              ].map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <select
+              className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 outline-none dark:text-white cursor-pointer"
+              value={`${sortConfig.key}-${sortConfig.direction}`}
+              onChange={(e) => {
+                const [key, direction] = e.target.value.split('-');
+                setSortConfig({ key, direction });
+              }}
+            >
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="amount-desc">Highest Amount</option>
+              <option value="amount-asc">Lowest Amount</option>
+            </select>
           </div>
         </div>
 
@@ -403,12 +455,18 @@ const DashboardPage = () => {
                   <tr key={exp._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
                       <p className="font-semibold text-slate-800 dark:text-slate-200">{exp.title}</p>
-                      <p className="text-xs text-slate-400 line-clamp-1">{exp.description || 'No description'}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {exp.merchant && <span className="text-[10px] bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 px-1.5 py-0.5 rounded font-bold">{exp.merchant}</span>}
+                        <p className="text-xs text-slate-400 line-clamp-1">{exp.description || 'No notes'}</p>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                        {exp.category}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="px-2 py-0.5 w-fit rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                          {exp.category}
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-semibold px-1 uppercase tracking-tight">{exp.paymentMethod || 'Cash'}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                       {new Date(exp.date).toLocaleDateString()}
