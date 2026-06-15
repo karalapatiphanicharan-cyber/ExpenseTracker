@@ -8,8 +8,14 @@ const errorHandler = require('./middleware/errorMiddleware');
 console.log('Loading environment variables...');
 dotenv.config();
 
+if (process.env.MONGODB_URI) {
+  const maskedURI = process.env.MONGODB_URI.replace(/:([^@]+)@/, ':****@');
+  console.log(`Environment loaded. MONGODB_URI exists: ${maskedURI}`);
+} else {
+  console.error('Environment Error: MONGODB_URI is not defined.');
+}
+
 // Connect to database and start server
-console.log('Connecting to MongoDB...');
 connectDB().then(() => {
   const app = express();
 
