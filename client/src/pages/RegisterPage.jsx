@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Loader2, Mail, Lock, User } from 'lucide-react';
+import { Mail, Lock, User } from 'lucide-react';
+import Button from '../components/Button';
+import Input from '../components/Input';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -33,69 +35,51 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="card w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-8 w-full max-w-md animate-in fade-in duration-500">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">Create an account</h1>
-          <p className="text-slate-500">Join ExpenseTracker to manage your finances.</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Join Us</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">Manage your finances with ease.</p>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                <User size={18} />
-              </span>
-              <input
-                type="text"
-                className="input-field pl-10"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                <Mail size={18} />
-              </span>
-              <input
-                type="email"
-                className="input-field pl-10"
-                placeholder="john@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                <Lock size={18} />
-              </span>
-              <input
-                type="password"
-                className="input-field pl-10"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-          </div>
-          <button type="submit" className="btn-primary w-full flex justify-center items-center py-2.5" disabled={loading}>
-            {loading ? <Loader2 className="animate-spin mr-2" size={20} /> : 'Create Account'}
-          </button>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Input
+            label="Full Name"
+            type="text"
+            placeholder="John Doe"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={loading}
+            icon={User}
+            required
+          />
+          <Input
+            label="Email Address"
+            type="email"
+            placeholder="john@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+            icon={Mail}
+            required
+          />
+          <Input
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+            icon={Lock}
+            required
+          />
+          <Button type="submit" className="w-full py-3" isLoading={loading}>
+            Create Account
+          </Button>
         </form>
-        <p className="text-center mt-6 text-sm text-slate-600">
+        <p className="text-center mt-8 text-sm text-slate-600 dark:text-slate-400">
           Already have an account?{' '}
-          <Link to="/login" className="text-primary-600 font-semibold hover:text-primary-700">
-            Sign in
+          <Link to="/login" className="text-primary-600 dark:text-primary-400 font-bold hover:underline">
+            Sign In
           </Link>
         </p>
       </div>
