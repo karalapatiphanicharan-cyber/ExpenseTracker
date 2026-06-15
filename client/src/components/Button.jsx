@@ -12,8 +12,8 @@ const Button = React.forwardRef(({ className, variant = 'primary', size = 'md', 
 
   const sizes = {
     sm: 'px-3 py-1.5 text-xs',
-    md: 'px-4 py-2.5 text-sm',
-    lg: 'px-6 py-3 text-base',
+    md: 'h-11 px-4 py-2.5 text-sm',
+    lg: 'h-12 px-6 py-3 text-base',
   };
 
   return (
