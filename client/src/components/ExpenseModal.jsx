@@ -37,10 +37,10 @@ const ExpenseModal = ({ isOpen, onClose, expense, onSuccess }) => {
     setLoading(true);
     try {
       if (expense) {
-        await api.put(`/expenses/${expense._id}`, formData);
+        await api.put(`expenses/${expense._id}`, formData);
         toast.success('Expense updated');
       } else {
-        await api.post('/expenses', formData);
+        await api.post('expenses', formData);
         toast.success('Expense added');
       }
       onSuccess();

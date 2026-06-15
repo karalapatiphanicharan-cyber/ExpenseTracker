@@ -39,10 +39,10 @@ const DashboardPage = () => {
 
   const fetchExpenses = async () => {
     try {
-      const res = await api.get('/expenses');
+      const res = await api.get('expenses');
       setExpenses(res.data.data);
     } catch (error) {
-      toast.error('Failed to fetch expenses');
+      toast.error(error.response?.data?.message || 'Failed to fetch expenses');
     } finally {
       setLoading(false);
     }
@@ -115,11 +115,11 @@ const DashboardPage = () => {
 
   const handleDeleteConfirm = async () => {
     try {
-      await api.delete(`/expenses/${expenseToDelete._id}`);
+      await api.delete(`expenses/${expenseToDelete._id}`);
       toast.success('Expense deleted');
       fetchExpenses();
     } catch (error) {
-      toast.error('Failed to delete expense');
+      toast.error(error.response?.data?.message || 'Failed to delete expense');
     } finally {
       setIsDeleteModalOpen(false);
     }
