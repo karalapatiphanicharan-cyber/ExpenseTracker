@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('auth/login', { email, password });
+      const response = await api.post('/auth/login', { email, password });
       const { token, ...userData } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
@@ -33,7 +33,20 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     try {
-      const response = await api.post('auth/register', { name, email, password });
+      const response = await api.post('/auth/register', { name, email, password });
+      const { token, ...userData } = response.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const updateProfile = async (data) => {
+    try {
+      const response = await api.put('/auth/profile', data);
       const { token, ...userData } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
@@ -51,7 +64,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );
