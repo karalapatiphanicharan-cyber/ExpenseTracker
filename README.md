@@ -36,6 +36,7 @@ A full-stack expense tracking application built with Node.js, Express, MongoDB, 
     JWT_SECRET=your_jwt_secret
     JWT_EXPIRE=30d
     ```
+    *Note: If your MongoDB password contains special characters, ensure the URI is properly URL-encoded (e.g., replace `$` with `%24`).*
 4.  Start the backend server:
     - Production: `npm start`
     - Development: `npm run dev`

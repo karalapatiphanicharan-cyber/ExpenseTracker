@@ -5,9 +5,11 @@ const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorMiddleware');
 
 // Load env vars
+console.log('Loading environment variables...');
 dotenv.config();
 
 // Connect to database and start server
+console.log('Connecting to MongoDB...');
 connectDB().then(() => {
   const app = express();
 
@@ -29,7 +31,7 @@ connectDB().then(() => {
   app.use(errorHandler);
 
   const server = app.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 
   // Handle unhandled promise rejections
