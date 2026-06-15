@@ -1,85 +1,70 @@
-# Expense Tracker Backend
+# Expense Tracker
 
-This is the backend for the Expense Tracker application, built with Node.js, Express, MongoDB, and Mongoose.
+A full-stack expense tracking application built with Node.js, Express, MongoDB, and React (Vite).
 
 ## Features
 
-- User authentication with JWT
-- Password hashing with bcrypt
-- Expense CRUD operations
-- Protected routes
-- Category-based filtering and date-based sorting for expenses
-- Centralized error handling
+- **Authentication:** Secure user registration and login with JWT and bcrypt.
+- **Expense Management:** Full CRUD operations for personal expenses.
+- **Dashboard:** Visualization of expenses by category and monthly spending trends.
+- **Search & Filter:** Easily find transactions by title or category.
+- **Responsive Design:** Premium, minimalist UI that works on all devices.
 
-## Prerequisites
+## Tech Stack
 
-- Node.js
-- MongoDB Atlas account
+- **Backend:** Node.js, Express, MongoDB, Mongoose
+- **Frontend:** React (Vite), Tailwind CSS, React Router, Recharts, Lucide React, Axios
 
 ## Getting Started
 
-1.  Clone the repository
+### Prerequisites
+
+- Node.js (v14 or higher)
+- MongoDB Atlas account
+
+### 1. Backend Setup
+
+1.  Navigate to the root directory.
 2.  Install dependencies:
     ```bash
     npm install
     ```
-3.  Create a `.env` file in the root directory and add the following:
+3.  Create a `.env` file in the root directory:
     ```env
     MONGODB_URI=your_mongodb_connection_string
     PORT=5000
     JWT_SECRET=your_jwt_secret
     JWT_EXPIRE=30d
     ```
-4.  Start the server:
-    - For production: `npm start`
-    - For development: `npm run dev`
+4.  Start the backend server:
+    - Production: `npm start`
+    - Development: `npm run dev`
+
+### 2. Frontend Setup
+
+1.  Navigate to the `client` directory.
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Create a `.env` file in the `client` directory:
+    ```env
+    VITE_API_URL=http://localhost:5000/api
+    ```
+4.  Start the frontend development server:
+    ```bash
+    npm run dev
+    ```
 
 ## API Endpoints
 
-### Authentication
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| POST | `/api/auth/register` | Register a new user |
-| POST | `/api/auth/login` | Login and get JWT token |
-
-**Example Register Body:**
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
+### Auth
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login user
 
 ### Expenses (Protected)
-
-Requires `Authorization: Bearer <token>` header.
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| POST | `/api/expenses` | Create a new expense |
-| GET | `/api/expenses` | Get all expenses (supports `?category=Food`) |
-| GET | `/api/expenses/:id` | Get a single expense by ID |
-| PUT | `/api/expenses/:id` | Update an expense by ID |
-| DELETE | `/api/expenses/:id` | Delete an expense by ID |
-
-**Example Expense Body:**
-```json
-{
-  "title": "Grocery",
-  "amount": 50,
-  "category": "Food",
-  "description": "Weekly grocery shopping",
-  "date": "2023-10-27"
-}
-```
-
-## Folder Structure
-
-- `server.js`: Entry point
-- `config/`: Database configuration
-- `controllers/`: Business logic
-- `middleware/`: Auth and error handling middleware
-- `models/`: Mongoose schemas
-- `routes/`: API route definitions
+- `GET /api/expenses` - Get all user expenses (supports `?category=`)
+- `POST /api/expenses` - Create new expense
+- `GET /api/expenses/:id` - Get single expense
+- `PUT /api/expenses/:id` - Update expense
+- `DELETE /api/expenses/:id` - Delete expense
