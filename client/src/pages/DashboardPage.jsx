@@ -39,7 +39,6 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import EmptyState from '../components/EmptyState';
 import Skeleton from '../components/Skeleton';
-import { Parser } from 'json2csv';
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -149,17 +148,27 @@ const DashboardPage = () => {
 
   const handleExportCSV = () => {
     try {
-      const fields = ['title', 'amount', 'category', 'date', 'description'];
-      const parser = new Parser({ fields });
-      const csv = parser.parse(expenses);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const headers = ['Title', 'Amount', 'Category', 'Date', 'Description'];
+      const rows = expenses.map(exp => [
+        `"${(exp.title || '').replace(/"/g, '""')}"`,
+        exp.amount,
+        `"${(exp.category || '').replace(/"/g, '""')}"`,
+        `"${new Date(exp.date).toLocaleDateString()}"`,
+        `"${(exp.description || '').replace(/"/g, '""')}"`
+      ].join(','));
+
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
       link.setAttribute('download', `expenses_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       toast.success('CSV exported successfully');
     } catch (err) {
+      console.error(err);
       toast.error('Failed to export CSV');
     }
   };
