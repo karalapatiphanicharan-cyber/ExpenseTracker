@@ -17,7 +17,8 @@ import {
   AlertCircle,
   Wallet,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Settings
 } from 'lucide-react';
 import {
   PieChart,
@@ -40,6 +41,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import EmptyState from '../components/EmptyState';
 import Skeleton from '../components/Skeleton';
+import { Link } from 'react-router-dom';
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -241,42 +243,56 @@ const DashboardPage = () => {
       </div>
 
       {/* Budget Progress */}
-      {stats.budget > 0 && (
-        <Card className="border-none bg-slate-900 dark:bg-slate-800 text-white overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-            <Wallet size={120} />
-          </div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">Monthly Budget</p>
-                <h3 className="text-3xl font-bold">${stats.thisMonthTotal.toLocaleString()} / ${stats.budget.toLocaleString()}</h3>
-              </div>
-              {stats.remainingBudget < 0 && (
+      <Card className="border-none bg-slate-900 dark:bg-slate-800 text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+          <Wallet size={120} />
+        </div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">Monthly Budget</p>
+              <h3 className="text-3xl font-bold">${stats.thisMonthTotal.toLocaleString()} / ${stats.budget.toLocaleString()}</h3>
+            </div>
+            <div className="flex items-center gap-3">
+              {stats.budget > 0 && stats.remainingBudget < 0 && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 text-red-200 rounded-lg border border-red-500/30 text-sm font-semibold">
                   <AlertCircle size={16} />
                   Budget Exceeded
                 </div>
               )}
-            </div>
-            <div className="h-3 bg-slate-800 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
-              <div
-                className={cn(
-                  "h-full transition-all duration-1000",
-                  stats.thisMonthTotal / stats.budget > 0.9 ? "bg-red-500" : "bg-primary-500"
-                )}
-                style={{ width: `${Math.min((stats.thisMonthTotal / stats.budget) * 100, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs font-medium">
-              <span className="text-slate-400">{((stats.thisMonthTotal / stats.budget) * 100).toFixed(1)}% spent</span>
-              <span className={cn(stats.remainingBudget < 0 ? "text-red-400" : "text-slate-400")}>
-                ${Math.abs(stats.remainingBudget).toLocaleString()} {stats.remainingBudget < 0 ? 'over' : 'left'}
-              </span>
+              <Link to="/profile" className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-white">
+                <Settings size={20} />
+              </Link>
             </div>
           </div>
-        </Card>
-      )}
+          {stats.budget > 0 ? (
+            <>
+              <div className="h-3 bg-slate-800 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
+                <div
+                  className={cn(
+                    "h-full transition-all duration-1000",
+                    stats.thisMonthTotal / stats.budget > 0.9 ? "bg-red-500" : "bg-primary-500"
+                  )}
+                  style={{ width: `${Math.min((stats.thisMonthTotal / stats.budget) * 100, 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs font-medium">
+                <span className="text-slate-400">{((stats.thisMonthTotal / stats.budget) * 100).toFixed(1)}% spent</span>
+                <span className={cn(stats.remainingBudget < 0 ? "text-red-400" : "text-slate-400")}>
+                  ${Math.abs(stats.remainingBudget).toLocaleString()} {stats.remainingBudget < 0 ? 'over' : 'left'}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-start gap-4 mt-2">
+              <p className="text-slate-400 text-sm italic">You haven't set a monthly budget yet.</p>
+              <Button as={Link} to="/profile" size="sm" className="bg-white/10 hover:bg-white/20 border-none shadow-none">
+                Set Budget
+              </Button>
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
