@@ -19,11 +19,8 @@ const categories = [
   { name: 'Travel', icon: '✈️' },
   { name: 'Salary', icon: '💰' },
   { name: 'Investment', icon: '📈' },
-  { name: 'EMI', icon: '💳' },
   { name: 'Insurance', icon: '🛡️' },
   { name: 'Subscriptions', icon: '📱' },
-  { name: 'Personal Care', icon: '✨' },
-  { name: 'Gifts', icon: '🎁' },
   { name: 'Other', icon: '📦' }
 ];
 
@@ -243,8 +240,8 @@ const ExpenseModal = ({ isOpen, onClose, expense, onSuccess }) => {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between ml-1">
               <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Notes <span className="text-slate-400 font-normal">(Optional)</span></label>
-              <span className={cn("text-[10px] font-bold", formData.description.length > 450 ? "text-red-500" : "text-slate-400")}>
-                {formData.description.length}/500
+              <span className={cn("text-[10px] font-bold", (formData.description?.length || 0) > 450 ? "text-red-500" : "text-slate-400")}>
+                {formData.description?.length || 0}/500
               </span>
             </div>
             <div className="relative group">
@@ -253,7 +250,7 @@ const ExpenseModal = ({ isOpen, onClose, expense, onSuccess }) => {
                 maxLength={500}
                 className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all min-h-[120px] resize-none font-medium"
                 placeholder="Optional details about this expense..."
-                value={formData.description}
+                value={formData.description || ''}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>

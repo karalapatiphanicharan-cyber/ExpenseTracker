@@ -69,6 +69,54 @@ const DashboardPage = () => {
     fetchExpenses();
   }, []);
 
+  const insights = useMemo(() => {
+    const result = [];
+    if (loading || expenses.length === 0) return result;
+
+    const now = new Date();
+    const thisMonthExpenses = expenses.filter(exp => {
+      const date = new Date(exp.date);
+      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+    });
+    const thisMonthTotal = thisMonthExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+    const budget = user?.budget || 0;
+
+    // 1. Budget Usage
+    if (budget > 0) {
+      const percent = Math.round((thisMonthTotal / budget) * 100);
+      if (percent >= 100) {
+        result.push({ text: `You've exceeded your monthly budget by $${(thisMonthTotal - budget).toLocaleString()}.`, icon: AlertCircle, color: 'text-red-500' });
+      } else if (percent >= 80) {
+        result.push({ text: `You've spent ${percent}% of your monthly budget.`, icon: AlertCircle, color: 'text-amber-500' });
+      } else {
+        result.push({ text: "Great job staying under budget this month!", icon: TrendingUp, color: 'text-emerald-500' });
+      }
+    }
+
+    // 2. Top Category
+    const categories = {};
+    expenses.forEach(exp => {
+      categories[exp.category] = (categories[exp.category] || 0) + exp.amount;
+    });
+    const topCategory = Object.entries(categories).sort((a, b) => b[1] - a[1])[0];
+    if (topCategory) {
+      result.push({ text: `${topCategory[0]} is your highest spending category at $${topCategory[1].toLocaleString()}.`, icon: PieChartIcon, color: 'text-primary-500' });
+    }
+
+    // 3. Subscriptions check
+    if (categories['Subscriptions'] > 0) {
+      result.push({ text: "Consider reviewing your subscription expenses to save more.", icon: DollarSign, color: 'text-indigo-500' });
+    }
+
+    // 4. Large Expense check
+    const largest = expenses.length > 0 ? [...expenses].sort((a, b) => b.amount - a.amount)[0] : null;
+    if (largest && largest.amount > 500) {
+      result.push({ text: `Your largest expense was ${largest.title} ($${largest.amount.toLocaleString()}).`, icon: ArrowDownRight, color: 'text-rose-500' });
+    }
+
+    return result.slice(0, 5);
+  }, [expenses, user, loading]);
+
   const stats = useMemo(() => {
     const total = expenses.reduce((acc, curr) => acc + curr.amount, 0);
     const count = expenses.length;
@@ -225,8 +273,10 @@ const DashboardPage = () => {
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Overview</h1>
-          <p className="text-slate-500 dark:text-slate-400">Welcome back, {user?.name}. Here's what's happening.</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Welcome back, {user?.name} 👋
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400">Here's what's happening with your finances today.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="secondary" onClick={handleExportCSV}>
@@ -279,16 +329,17 @@ const DashboardPage = () => {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-6">
         {[
-          { label: 'Total Spent', value: `$${stats.total.toLocaleString()}`, icon: DollarSign, color: 'text-primary-600', bg: 'bg-primary-50 dark:bg-primary-900/20' },
-          { label: 'This Month', value: `$${stats.thisMonthTotal.toLocaleString()}`, icon: TrendingUp, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/20' },
-          { label: 'Remaining', value: `$${Math.max(0, stats.remainingBudget).toLocaleString()}`, icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-          { label: 'Avg. Daily', value: `$${stats.averageDaily.toFixed(2)}`, icon: ArrowUpRight, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-          { label: 'Largest', value: stats.largestExpense ? `$${stats.largestExpense.amount.toLocaleString()}` : 'N/A', icon: ArrowDownRight, color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20' },
-          { label: 'Top Category', value: stats.topCategory, icon: PieChartIcon, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+          { label: 'Total Spending', value: `$${stats.total.toLocaleString()}`, icon: DollarSign, color: 'text-primary-600', bg: 'bg-primary-50 dark:bg-primary-900/20' },
+          { label: 'This Month Spending', value: `$${stats.thisMonthTotal.toLocaleString()}`, icon: TrendingUp, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/20' },
+          { label: 'Remaining Budget', value: `$${Math.max(0, stats.remainingBudget).toLocaleString()}`, icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+          { label: 'Monthly Budget', value: `$${stats.budget.toLocaleString()}`, icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+          { label: 'Largest Expense', value: stats.largestExpense ? `$${stats.largestExpense.amount.toLocaleString()}` : 'N/A', icon: ArrowDownRight, color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+          { label: 'Average Daily Spending', value: `$${stats.averageDaily.toFixed(2)}`, icon: ArrowUpRight, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+          { label: 'Top Spending Category', value: stats.topCategory, icon: PieChartIcon, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
         ].map((item, i) => (
-          <Card key={i} className="p-5 flex flex-col items-center text-center justify-center border-slate-100 dark:border-slate-800 hover:shadow-md transition-all">
+          <Card key={i} className="p-4 flex flex-col items-center text-center justify-center border-slate-100 dark:border-slate-800 hover:shadow-md transition-all">
             <div className={cn("p-3 rounded-2xl mb-3", item.bg, item.color)}>
               <item.icon size={22} />
             </div>
@@ -298,21 +349,102 @@ const DashboardPage = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Financial Insights */}
+        <Card className="lg:col-span-4 flex flex-col">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp size={20} className="text-primary-500" />
+            <h3 className="font-bold text-slate-800 dark:text-white text-lg">Financial Insights</h3>
+          </div>
+          <div className="flex-1 space-y-4">
+            {insights.length > 0 ? (
+              insights.map((insight, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-all hover:shadow-sm">
+                  <div className={cn("mt-0.5 p-1.5 rounded-lg bg-white dark:bg-slate-700 shadow-sm", insight.color)}>
+                    <insight.icon size={16} />
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {insight.text}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6">
+                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 mb-3">
+                  <PieChartIcon size={24} />
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm italic">
+                  Add more data to see personalized financial insights.
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+
         {/* Charts */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={20} className="text-slate-400" />
+              <h3 className="font-bold text-slate-800 dark:text-white">Monthly Spending Trend</h3>
+            </div>
+          </div>
+          <div className="h-72">
+            {expenses.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData.trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                    dy={10}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 600 }}
+                    formatter={(value) => [`$${value.toLocaleString()}`, 'Total Spending']}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#0ea5e9"
+                    strokeWidth={4}
+                    dot={{ r: 6, fill: '#0ea5e9', strokeWidth: 3, stroke: '#fff' }}
+                    activeDot={{ r: 8, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center">
+                <EmptyState
+                  title="No trend data"
+                  description="Start logging expenses to see your spending trend."
+                />
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card className="lg:col-span-5">
           <div className="flex items-center gap-2 mb-6">
             <PieChartIcon size={20} className="text-slate-400" />
             <h3 className="font-bold text-slate-800 dark:text-white">Category Split</h3>
           </div>
-          <div className="h-64">
+          <div className="h-72">
             {expenses.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartData.pieData}
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={70}
+                    outerRadius={90}
                     paddingAngle={5}
                     dataKey="value"
                   >
@@ -322,53 +454,60 @@ const DashboardPage = () => {
                   </Pie>
                   <RechartsTooltip
                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', background: '#fff', color: '#1e293b' }}
+                    formatter={(value) => [`$${value.toLocaleString()}`, 'Amount']}
                   />
                 </PieChart>
               </ResponsiveContainer>
-            ) : <div className="h-full flex items-center justify-center text-slate-400 italic text-sm">No data</div>}
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <EmptyState
+                  title="No data"
+                  description="Log expenses to see category breakdown."
+                />
+              </div>
+            )}
           </div>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp size={20} className="text-slate-400" />
-            <h3 className="font-bold text-slate-800 dark:text-white">Monthly Spending Trend</h3>
-          </div>
-          <div className="h-64">
-            {expenses.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData.trendData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                  <Line type="monotone" dataKey="total" stroke="#0ea5e9" strokeWidth={3} dot={{ r: 4, fill: '#0ea5e9', strokeWidth: 2, stroke: '#fff' }} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : <div className="h-full flex items-center justify-center text-slate-400 italic text-sm">No data</div>}
-          </div>
-        </Card>
-
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-7">
           <div className="flex items-center gap-2 mb-6">
             <List size={20} className="text-slate-400" />
             <h3 className="font-bold text-slate-800 dark:text-white">Category Comparison</h3>
           </div>
-          <div className="h-64">
+          <div className="h-72">
             {expenses.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData.pieData}>
+                <BarChart data={chartData.pieData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }}
+                    dy={10}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                    tickFormatter={(value) => `$${value}`}
+                  />
                   <RechartsTooltip
                     cursor={{ fill: '#f8fafc' }}
                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value) => [`$${value.toLocaleString()}`, 'Total']}
                   />
-                  <Bar dataKey="value" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="#0ea5e9" radius={[6, 6, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>
-            ) : <div className="h-full flex items-center justify-center text-slate-400 italic text-sm">No data</div>}
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <EmptyState
+                  title="No data"
+                  description="Add expenses to compare categories."
+                />
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -401,8 +540,8 @@ const DashboardPage = () => {
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm w-full md:w-64 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:text-white"
-                placeholder="Search name, merchant, notes..."
+                className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm w-full md:w-72 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:text-white"
+                placeholder="Search expenses, merchants, or notes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -440,39 +579,49 @@ const DashboardPage = () => {
 
         <div className="overflow-x-auto">
           {filteredAndSortedExpenses.length > 0 ? (
-            <table className="w-full text-left">
+            <table className="w-full text-left min-w-[800px]">
               <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-semibold">
-                  <th className="px-6 py-4">Transaction</th>
-                  <th className="px-6 py-4">Category</th>
-                  <th className="px-6 py-4">Date</th>
-                  <th className="px-6 py-4">Amount</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-bold">
+                  <th className="px-6 py-5">Expense Name</th>
+                  <th className="px-6 py-5">Category</th>
+                  <th className="px-6 py-5">Merchant</th>
+                  <th className="px-6 py-5">Payment Method</th>
+                  <th className="px-6 py-5">Date</th>
+                  <th className="px-6 py-5">Amount</th>
+                  <th className="px-6 py-5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredAndSortedExpenses.map((exp) => (
                   <tr key={exp._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-800 dark:text-slate-200">{exp.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {exp.merchant && <span className="text-[10px] bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 px-1.5 py-0.5 rounded font-bold">{exp.merchant}</span>}
-                        <p className="text-xs text-slate-400 line-clamp-1">{exp.description || 'No notes'}</p>
-                      </div>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">{exp.title}</p>
+                      <p className="text-xs text-slate-400 line-clamp-1 mt-0.5 italic">{exp.description || 'No notes'}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="px-2 py-0.5 w-fit rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                          {exp.category}
-                        </span>
-                        <span className="text-[9px] text-slate-400 font-semibold px-1 uppercase tracking-tight">{exp.paymentMethod || 'Cash'}</span>
-                      </div>
+                      <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase tracking-tight">
+                        {exp.category}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                    <td className="px-6 py-4">
+                      {exp.merchant ? (
+                        <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-2 py-1 rounded-md">
+                          {exp.merchant}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{exp.paymentMethod || 'Cash'}</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 font-medium">
                       {new Date(exp.date).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
-                      ${exp.amount.toLocaleString()}
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-slate-900 dark:text-white text-base">
+                        ${exp.amount.toLocaleString()}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">

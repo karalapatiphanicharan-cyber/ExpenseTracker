@@ -61,6 +61,7 @@ const MainLayout = () => {
         <button
           onClick={() => setIsMobileOpen(!isMobileOpen)}
           className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+          aria-label={isMobileOpen ? "Close menu" : "Open menu"}
         >
           {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -85,6 +86,7 @@ const MainLayout = () => {
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full items-center justify-center text-slate-500 dark:text-slate-400 hover:text-primary-600 shadow-sm z-50 opacity-0 group-hover:opacity-100 transition-all"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
@@ -127,6 +129,7 @@ const MainLayout = () => {
               "flex items-center text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all font-semibold h-12",
               isCollapsed ? "justify-center px-0" : "px-4 gap-3",
             )}
+            aria-label={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             title={isCollapsed ? (darkMode ? 'Light Mode' : 'Dark Mode') : ""}
           >
             {darkMode ? <Sun size={22} className="shrink-0" /> : <Moon size={22} className="shrink-0" />}
@@ -154,6 +157,7 @@ const MainLayout = () => {
               "flex items-center text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all font-bold h-12",
               isCollapsed ? "justify-center px-0" : "px-4 gap-3",
             )}
+            aria-label="Logout"
             title={isCollapsed ? "Logout" : ""}
           >
             <LogOut size={22} className="shrink-0" />
