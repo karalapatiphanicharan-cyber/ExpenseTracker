@@ -2,6 +2,10 @@
 
 A full-stack expense tracking application built with Node.js, Express, MongoDB, and React (Vite).
 
+# ExpenseTrack
+
+🌐 **Live Demo:** https://expense-tracker-nu-sooty.vercel.app
+
 ## Features
 
 - **Authentication:** Secure user registration and login with JWT and bcrypt.
