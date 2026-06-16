@@ -217,25 +217,43 @@ const DashboardPage = () => {
     });
     const pieData = Object.keys(categories).map(key => ({ name: key, value: categories[key] }));
 
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const now = new Date();
     const trendData = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      trendData.push({
-        month: months[d.getMonth()],
-        year: d.getFullYear(),
-        total: 0
-      });
-    }
+    if (expenses.length > 0) {
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    expenses.forEach(exp => {
-      const d = new Date(exp.date);
-      const m = months[d.getMonth()];
-      const y = d.getFullYear();
-      const match = trendData.find(item => item.month === m && item.year === y);
-      if (match) match.total += exp.amount;
-    });
+      // Sort expenses by date to find range
+      const sortedExpenses = [...expenses].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const minDate = new Date(sortedExpenses[0].date);
+      const maxDate = new Date(sortedExpenses[sortedExpenses.length - 1].date);
+
+      // Start from the beginning of the min month
+      let current = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+      // End at the beginning of the max month
+      const end = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+      while (current <= end) {
+        const month = current.getMonth();
+        const year = current.getFullYear();
+
+        const total = expenses.reduce((acc, exp) => {
+          const d = new Date(exp.date);
+          if (d.getMonth() === month && d.getFullYear() === year) {
+            return acc + exp.amount;
+          }
+          return acc;
+        }, 0);
+
+        trendData.push({
+          month: months[month],
+          year: year,
+          name: `${months[month]} ${year}`,
+          total: total
+        });
+
+        // Advance to next month
+        current.setMonth(current.getMonth() + 1);
+      }
+    }
 
     return { pieData, trendData };
   }, [expenses]);
@@ -448,10 +466,10 @@ const DashboardPage = () => {
                 <LineChart data={chartData.trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis
-                    dataKey="month"
+                    dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                    tick={{ fill: '#64748b', fontSize: 10, fontWeight: 500 }}
                     dy={10}
                   />
                   <YAxis
