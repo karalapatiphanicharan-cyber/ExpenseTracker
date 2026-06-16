@@ -4,8 +4,8 @@ import { Loader2 } from 'lucide-react';
 
 const Button = React.forwardRef(({ className, variant = 'primary', size = 'md', isLoading, children, ...props }, ref) => {
   const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-200 dark:shadow-none',
-    secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700',
+    primary: 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-200 dark:shadow-none ring-offset-white dark:ring-offset-slate-900 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+    secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700 ring-offset-white dark:ring-offset-slate-900 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
     danger: 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 dark:shadow-none',
     ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800',
   };
@@ -20,7 +20,7 @@ const Button = React.forwardRef(({ className, variant = 'primary', size = 'md', 
     <button
       ref={ref}
       className={cn(
-        'inline-flex items-center justify-center rounded-xl font-semibold transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none',
+        'inline-flex items-center justify-center rounded-2xl font-bold transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none focus:outline-none',
         variants[variant],
         sizes[size],
         className
