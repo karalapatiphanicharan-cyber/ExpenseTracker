@@ -17,7 +17,15 @@ import {
   AlertCircle,
   Wallet,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  CreditCard,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Zap,
+  Target,
+  Clock,
+  RefreshCw
 } from 'lucide-react';
 import {
   PieChart,
@@ -53,6 +61,7 @@ const DashboardPage = () => {
   const [currentExpense, setCurrentExpense] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(true);
 
   const fetchExpenses = async () => {
     try {
@@ -116,6 +125,17 @@ const DashboardPage = () => {
 
     return result.slice(0, 5);
   }, [expenses, user, loading]);
+
+  const suggestions = useMemo(() => {
+    const list = [
+      { text: "Consider reducing subscription expenses to save more.", icon: Zap },
+      { text: "Set a weekly spending limit to keep your budget in check.", icon: Clock },
+      { text: "Set a savings goal for your next big purchase.", icon: Target },
+      { text: "Review recurring payments and cancel unused ones.", icon: RefreshCw },
+      { text: "Try tracking groceries separately for better visibility.", icon: Sparkles }
+    ];
+    return list;
+  }, []);
 
   const stats = useMemo(() => {
     const total = expenses.reduce((acc, curr) => acc + curr.amount, 0);
@@ -381,9 +401,42 @@ const DashboardPage = () => {
           </div>
         </Card>
 
-        {/* Charts */}
-        <Card className="lg:col-span-8">
-          <div className="flex items-center justify-between mb-6">
+        {/* Smart Suggestions & Charts */}
+        <div className="lg:col-span-8 space-y-8">
+          {/* Smart Suggestions */}
+          <Card className="p-0 overflow-hidden border-primary-100 dark:border-primary-900/30">
+            <button
+              onClick={() => setIsSuggestionsOpen(!isSuggestionsOpen)}
+              className="w-full flex items-center justify-between p-6 bg-primary-50/30 dark:bg-primary-900/10 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg">
+                  <Sparkles size={18} />
+                </div>
+                <h3 className="font-bold text-slate-800 dark:text-white text-lg tracking-tight">Smart Suggestions</h3>
+              </div>
+              {isSuggestionsOpen ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+            </button>
+
+            {isSuggestionsOpen && (
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-4 duration-300">
+                {suggestions.map((suggestion, i) => (
+                  <div key={i} className="flex items-start gap-3 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-800 transition-all shadow-sm">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-primary-500">
+                      <suggestion.icon size={16} />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 leading-tight mt-0.5">
+                      {suggestion.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* Charts */}
+          <Card>
+            <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <TrendingUp size={20} className="text-slate-400" />
               <h3 className="font-bold text-slate-800 dark:text-white">Monthly Spending Trend</h3>
@@ -429,8 +482,9 @@ const DashboardPage = () => {
                 />
               </div>
             )}
-          </div>
-        </Card>
+            </div>
+          </Card>
+        </div>
 
         <Card className="lg:col-span-5">
           <div className="flex items-center gap-2 mb-6">
